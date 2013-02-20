@@ -27,7 +27,6 @@ from qgis.core import *
 import resources_rc
 # Import the code for the dialog
 from distromapdialog import DistroMapDialog, Features
-import QGisLayers
 
 def getLayerFromId (uniqueId):
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
@@ -137,6 +136,21 @@ class DistroMap:
                 if geom.intersects(tmpGeom):
                     selectedSet.append(infeat.id())
         inputLayer.setSelectedFeatures(selectedSet)
+    
+    def saveSelected(self):
+        inputLayer = getLayerFromId(self.GRID_LAYER)
+        provider = inputLayer.dataProvider()
+
+        # create layer
+        outputLayer = QgsVectorLayer("Polygon", "taxon", "memory")
+        outProvider = outputLayer.dataProvider()
+
+        # add features
+        outGrids = features(inputLayer)
+        for grid in outGrids:
+            outProvider.addFeatures([grid])
+        outputLayer.updateExtents()
+        self.TAXON_GRID_LAYER = outputLayer
 
 
     # run method that performs all the real work
@@ -197,8 +211,14 @@ class DistroMap:
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
             count = 0 #DEBUG
             for taxon in self.UNIQUE_VALUES:
-                if count < 2:
+                if count < 10:
                     self.selectByAttribute(taxon)
                     self.selectByLocation()
+                    self.saveSelected()
+                    #load newly created memory layer
+                    QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
+                    #unload memory layer
+                    QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
+                    self.TAXON_GRID_LAYER = None
                     count += 1
             
