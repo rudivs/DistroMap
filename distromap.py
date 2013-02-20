@@ -27,6 +27,7 @@ from qgis.core import *
 import resources_rc
 # Import the code for the dialog
 from distromapdialog import DistroMapDialog
+import ftools_utils as utils
 
 def getLayerFromId (uniqueId):
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
@@ -41,8 +42,6 @@ class DistroMap:
         # initialize locale
         localePath = ""
         locale = QSettings().value("locale/userLocale").toString()[0:2]
-        
-        #self.layerdict = {}
 
         if QFileInfo(self.plugin_dir).exists():
             localePath = self.plugin_dir + "/i18n/distromap_" + locale + ".qm"
@@ -87,7 +86,7 @@ class DistroMap:
         except:
             return
         for (name,index) in fieldmap.iteritems():
-            self.dlg.ui.comboTaxonField.addItem(name)
+            self.dlg.ui.comboTaxonField.addItem(name,index)
 
     def loadOutDir(self):
         newname = QFileDialog.getExistingDirectory(None, QString.fromLocal8Bit("Output Maps Directory"),
@@ -95,6 +94,10 @@ class DistroMap:
 
         if newname != None:
             self.dlg.ui.leOutDir.setText(QString(newname))
+            
+    def getUniqueValues(self):
+        layer = getLayerFromId(self.LOCALITIES_LAYER)
+        self.UNIQUE_VALUES = layer.dataProvider().uniqueValues(self.TAXON_FIELD_INDEX)
 
 
     # run method that performs all the real work
@@ -108,8 +111,8 @@ class DistroMap:
         self.dlg.ui.comboGrid.clear()
         
         # populate combo boxes:
-        self.dlg.ui.comboSecondary.addItem("None")
-        self.dlg.ui.comboSurface.addItem("None")
+        self.dlg.ui.comboSecondary.addItem("None",None)
+        self.dlg.ui.comboSurface.addItem("None",None)
         for layer in self.iface.mapCanvas().layers():
             self.dlg.ui.comboBase.addItem(layer.name(),QVariant(layer.id()))
             self.dlg.ui.comboSecondary.addItem(layer.name(),QVariant(layer.id()))
@@ -133,6 +136,29 @@ class DistroMap:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result == 1:
-            # do something useful (delete the line containing pass and
-            # substitute with your code)
-            pass
+            # initialise input parameters
+            self.BASE_LAYER = self.dlg.ui.comboBase.currentItemData()
+            self.SECONDARY_LAYER = self.dlg.ui.comboSecondary.currentItemData()
+            self.SURFACE_LAYER = self.dlg.ui.comboSurface.currentItemData()
+            self.LOCALITIES_LAYER = self.dlg.ui.comboLocalities.currentItemData()
+            self.TAXON_FIELD_INDEX = self.dlg.ui.comboTaxonField.currentItemData().toInt()[0]
+            self.GRID_LAYER = self.dlg.ui.comboGrid.currentItemData()
+            self.MIN_X = self.dlg.ui.leMinX.text()
+            self.MIN_Y = self.dlg.ui.leMinY.text()
+            self.MAX_X = self.dlg.ui.leMaxX.text()
+            self.MAX_Y = self.dlg.ui.leMaxY.text()
+            self.OUT_DIR = self.dlg.ui.leOutDir.text()
+            
+            #QMessageBox.information(self.iface.mainWindow(),"DEBUG",QString(str(self.TAXON_FIELD_INDEX)))
+            if self.TAXON_FIELD_INDEX != None:
+                self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
+                #QMessageBox.information(self.iface.mainWindow(),"DEBUG",values)
+            else:
+                QMessageBox.information(self.iface.mainWindow(),"Distribution Map Creator","No taxon identifier field specified")
+            
+
+                
+            
+        
+        
+        
