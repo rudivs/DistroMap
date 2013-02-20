@@ -26,11 +26,15 @@ from qgis.core import *
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
-from distromapdialog import DistroMapDialog
+from distromapdialog import DistroMapDialog, Features
 import QGisLayers
 
 def getLayerFromId (uniqueId):
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
+
+def features(layer):
+    return Features(layer)
+
 
 class DistroMap:
 
@@ -123,8 +127,8 @@ class DistroMap:
         infeat = QgsFeature()
         geom = QgsGeometry()
         selectedSet = []        
-        features = QGisLayers.features(selectLayer)
-        for feat in features:
+        feats = features(selectLayer)
+        for feat in feats:
             geom = QgsGeometry(feat.geometry())
             intersects = index.intersects(geom.boundingBox())
             for i in intersects:
@@ -193,7 +197,7 @@ class DistroMap:
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
             count = 0 #DEBUG
             for taxon in self.UNIQUE_VALUES:
-                if count < 10:
+                if count < 2:
                     self.selectByAttribute(taxon)
                     self.selectByLocation()
                     count += 1
