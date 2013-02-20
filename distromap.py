@@ -98,6 +98,17 @@ class DistroMap:
     def getUniqueValues(self):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
         self.UNIQUE_VALUES = layer.dataProvider().uniqueValues(self.TAXON_FIELD_INDEX)
+    
+    def selectByAttribute(self, value):
+        layer = getLayerFromId(self.LOCALITIES_LAYER)
+        selectindex = self.TAXON_FIELD_INDEX
+
+        readcount = 0
+        selected = []
+        for feature in layer.getFeatures():
+            if unicode(feature.attributes()[selectindex].toString()) == unicode(value.toString()):
+                selected.append(feature.id())
+        layer.setSelectedFeatures(selected)
 
 
     # run method that performs all the real work
@@ -149,14 +160,21 @@ class DistroMap:
             self.MAX_Y = self.dlg.ui.leMaxY.text()
             self.OUT_DIR = self.dlg.ui.leOutDir.text()
             
-            #QMessageBox.information(self.iface.mainWindow(),"DEBUG",QString(str(self.TAXON_FIELD_INDEX)))
+            # get list of unique values
             if self.TAXON_FIELD_INDEX != None:
                 self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
                 #QMessageBox.information(self.iface.mainWindow(),"DEBUG",values)
             else:
                 QMessageBox.information(self.iface.mainWindow(),"Distribution Map Creator","No taxon identifier field specified")
             
-
+            # process all unique taxa
+            getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
+            count = 0 #DEBUG
+            for taxon in self.UNIQUE_VALUES:
+                if count < 10:
+                    self.selectByAttribute(taxon)
+                    count += 1
+           
                 
             
         
