@@ -12,7 +12,7 @@
 name=Distribution Map Creator
 qgisMinimumVersion=1.8
 description=Creates simple distribution maps based on point localities and a polygon grid layer.
-version=0.1
+version=0.3
 author=Rudi von Staden
 email=rudivs@gmail.com
 

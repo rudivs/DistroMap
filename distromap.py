@@ -27,6 +27,7 @@ from qgis.core import *
 import resources_rc
 # Import the code for the dialog
 from distromapdialog import DistroMapDialog, Features
+import os
 
 def getLayerFromId (uniqueId):
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
@@ -152,6 +153,59 @@ class DistroMap:
         outputLayer.updateExtents()
         self.TAXON_GRID_LAYER = outputLayer
 
+    def printMap(self,taxon):
+        currentdir = os.path.dirname(os.path.realpath(__file__))
+        self.TAXON_GRID_LAYER.loadNamedStyle(currentdir+os.sep+"distribution_map.qml")
+        
+        # create image (dimensions 325x299)
+        img = QImage(QSize(325,299), QImage.Format_ARGB32_Premultiplied)
+
+        # set image's background color
+        color = QColor(192,192,255)   # blue sea
+        img.fill(color.rgb())
+
+        # create painter
+        p = QPainter()
+        p.begin(img)
+        p.setRenderHint(QPainter.Antialiasing)
+
+        render = QgsMapRenderer()
+
+        # create layer set
+        baseLayer = getLayerFromId(self.BASE_LAYER)
+        if self.SECONDARY_LAYER != None:
+            secondaryLayer = getLayerFromId(self.SECONDARY_LAYER)
+        else:
+            secondaryLayer = None
+        if self.SURFACE_LAYER != None:
+            surfaceLayer = getLayerFromId(self.SURFACE_LAYER)
+        else:
+            surfaceLayer = None
+        
+        lst = []
+        lst.append(self.TAXON_GRID_LAYER.id())
+        if self.SURFACE_LAYER != unicode(""):
+            lst.append(self.SURFACE_LAYER)
+        if self.SECONDARY_LAYER != unicode(""):
+            lst.append(self.SECONDARY_LAYER)
+        lst.append(self.BASE_LAYER)
+        
+        render.setLayerSet(lst)
+
+        # set extent (xmin,ymin,xmax,ymax)
+        rect = QgsRectangle(self.X_MIN,self.Y_MIN,self.X_MAX,self.Y_MAX)
+        render.setExtent(rect)
+
+        # set output size
+        render.setOutputSize(img.size(), img.logicalDpiX())
+
+        # do the rendering
+        render.render(p)
+        p.end()
+        
+        # save image
+        outdir = self.OUT_DIR
+        img.save(outdir+os.sep+unicode(taxon.toString())+".png","png")
 
     # run method that performs all the real work
     def run(self):
@@ -194,10 +248,10 @@ class DistroMap:
             self.LOCALITIES_LAYER = self.dlg.ui.comboLocalities.currentItemData()
             self.TAXON_FIELD_INDEX = self.dlg.ui.comboTaxonField.currentItemData().toInt()[0]
             self.GRID_LAYER = self.dlg.ui.comboGrid.currentItemData()
-            self.MIN_X = self.dlg.ui.leMinX.text()
-            self.MIN_Y = self.dlg.ui.leMinY.text()
-            self.MAX_X = self.dlg.ui.leMaxX.text()
-            self.MAX_Y = self.dlg.ui.leMaxY.text()
+            self.X_MIN = self.dlg.ui.leMinX.text().toFloat()[0]
+            self.Y_MIN = self.dlg.ui.leMinY.text().toFloat()[0]
+            self.X_MAX = self.dlg.ui.leMaxX.text().toFloat()[0]
+            self.Y_MAX = self.dlg.ui.leMaxY.text().toFloat()[0]
             self.OUT_DIR = self.dlg.ui.leOutDir.text()
             
             # get list of unique values
@@ -209,14 +263,15 @@ class DistroMap:
             
             # process all unique taxa
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
-            count = 0 #DEBUG
+            count = 0 
             for taxon in self.UNIQUE_VALUES:
-                if count < 10:
+                if count < 2:  #DEBUG
                     self.selectByAttribute(taxon)
                     self.selectByLocation()
                     self.saveSelected()
                     #load newly created memory layer
                     QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
+                    self.printMap(taxon)
                     #unload memory layer
                     QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
                     self.TAXON_GRID_LAYER = None
