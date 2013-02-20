@@ -79,7 +79,6 @@ class DistroMap:
     
     def loadTaxonFields(self):
         self.dlg.ui.comboTaxonField.clear()
-        #QMessageBox.information(self.iface.mainWindow(),'Current Item Data', str(self.dlg.ui.comboLocalities.currentItemData()), QMessageBox.Ok) #DEBUG
         try:
             layer=getLayerFromId(self.dlg.ui.comboLocalities.currentItemData())
         except: #Crashes without valid shapefiles
@@ -257,7 +256,6 @@ class DistroMap:
             # get list of unique values
             if self.TAXON_FIELD_INDEX != None:
                 self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
-                #QMessageBox.information(self.iface.mainWindow(),"DEBUG",values)
             else:
                 QMessageBox.information(self.iface.mainWindow(),"Distribution Map Creator","No taxon identifier field specified")
             
@@ -265,15 +263,14 @@ class DistroMap:
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
             count = 0 
             for taxon in self.UNIQUE_VALUES:
-                if count < 2:  #DEBUG
-                    self.selectByAttribute(taxon)
-                    self.selectByLocation()
-                    self.saveSelected()
-                    #load newly created memory layer
-                    QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
-                    self.printMap(taxon)
-                    #unload memory layer
-                    QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
-                    self.TAXON_GRID_LAYER = None
-                    count += 1
+                self.selectByAttribute(taxon)
+                self.selectByLocation()
+                self.saveSelected()
+                #load newly created memory layer
+                QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
+                self.printMap(taxon)
+                #unload memory layer
+                QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
+                self.TAXON_GRID_LAYER = None
+                count += 1
             
