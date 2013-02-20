@@ -22,8 +22,13 @@
 
 from PyQt4 import QtCore, QtGui
 from ui_distromap import Ui_DistroMap
-# create the dialog for zoom to point
 
+# Add a method to QComboBox to get the current item data
+def currentItemData(self):
+    return self.itemData(self.currentIndex()).toString()
+
+QtGui.QComboBox.currentItemData = currentItemData
+    
 
 class DistroMapDialog(QtGui.QDialog):
     def __init__(self):
