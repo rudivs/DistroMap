@@ -27,7 +27,7 @@ from qgis.core import *
 import resources_rc
 # Import the code for the dialog
 from distromapdialog import DistroMapDialog
-import ftools_utils as utils
+import QGisLayers
 
 def getLayerFromId (uniqueId):
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
@@ -109,6 +109,30 @@ class DistroMap:
             if unicode(feature.attributes()[selectindex].toString()) == unicode(value.toString()):
                 selected.append(feature.id())
         layer.setSelectedFeatures(selected)
+        
+    def selectByLocation(self):
+        inputLayer = getLayerFromId(self.GRID_LAYER)
+        selectLayer = getLayerFromId(self.LOCALITIES_LAYER)
+        inputProvider = inputLayer.dataProvider()
+
+        index = QgsSpatialIndex()
+        feat = QgsFeature()
+        for feat in inputLayer.getFeatures():        
+            index.insertFeature(feat)
+     
+        infeat = QgsFeature()
+        geom = QgsGeometry()
+        selectedSet = []        
+        features = QGisLayers.features(selectLayer)
+        for feat in features:
+            geom = QgsGeometry(feat.geometry())
+            intersects = index.intersects(geom.boundingBox())
+            for i in intersects:
+                inputLayer.featureAtId(i, infeat, True)
+                tmpGeom = QgsGeometry( infeat.geometry() )
+                if geom.intersects(tmpGeom):
+                    selectedSet.append(infeat.id())
+        inputLayer.setSelectedFeatures(selectedSet)
 
 
     # run method that performs all the real work
@@ -138,8 +162,6 @@ class DistroMap:
         QObject.connect(self.dlg.ui.comboLocalities,SIGNAL('currentIndexChanged (int)'),self.loadTaxonFields)
         QObject.connect(self.dlg.ui.btnBrowse,SIGNAL('clicked()'),self.loadOutDir)
         
-        # actions
- 
         # show the dialog
         self.dlg.show()       
         
@@ -173,10 +195,6 @@ class DistroMap:
             for taxon in self.UNIQUE_VALUES:
                 if count < 10:
                     self.selectByAttribute(taxon)
+                    self.selectByLocation()
                     count += 1
-           
-                
             
-        
-        
-        
