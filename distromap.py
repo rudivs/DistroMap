@@ -64,17 +64,17 @@ class DistroMap:
         # Create action that will start plugin configuration
         self.action = QAction(
             QIcon(":/plugins/distromap/icon.png"),
-            u"Distribution Map Creator...", self.iface.mainWindow())
+            u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
-        self.iface.addPluginToMenu(u"&Distribution Map Creator", self.action)
+        self.iface.addPluginToMenu(u"&Distribution Map Generator", self.action)
 
     def unload(self):
         # Remove the plugin menu item and icon
-        self.iface.removePluginMenu(u"&Distribution Map Creator", self.action)
+        self.iface.removePluginMenu(u"&Distribution Map Generator", self.action)
         self.iface.removeToolBarIcon(self.action)
     
     def loadTaxonFields(self):
@@ -257,7 +257,7 @@ class DistroMap:
             if self.TAXON_FIELD_INDEX != None:
                 self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
             else:
-                QMessageBox.information(self.iface.mainWindow(),"Distribution Map Creator","No taxon identifier field specified")
+                QMessageBox.information(self.iface.mainWindow(),"Distribution Map Generator","No taxon identifier field specified")
             
             # process all unique taxa
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])

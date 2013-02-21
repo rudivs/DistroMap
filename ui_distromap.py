@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_distromap.ui'
 #
-# Created: Tue Feb 19 20:16:09 2013
+# Created: Thu Feb 21 11:28:49 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -125,7 +125,7 @@ class Ui_DistroMap(object):
         QtCore.QMetaObject.connectSlotsByName(DistroMap)
 
     def retranslateUi(self, DistroMap):
-        DistroMap.setWindowTitle(QtGui.QApplication.translate("DistroMap", "DistroMap", None, QtGui.QApplication.UnicodeUTF8))
+        DistroMap.setWindowTitle(QtGui.QApplication.translate("DistroMap", "Distribution Map Generator", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("DistroMap", "Background layers:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("DistroMap", "Base", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("DistroMap", "Secondary", None, QtGui.QApplication.UnicodeUTF8))
