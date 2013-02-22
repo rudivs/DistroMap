@@ -75,3 +75,4 @@ class DistroMapDialog(QtGui.QDialog):
         # Set up the user interface from Designer.
         self.ui = Ui_DistroMap()
         self.ui.setupUi(self)
+

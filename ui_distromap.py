@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_distromap.ui'
 #
-# Created: Thu Feb 21 11:28:49 2013
+# Created: Fri Feb 22 15:23:55 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -120,7 +120,6 @@ class Ui_DistroMap(object):
         self.gridLayout_3.addWidget(self.buttonBox, 6, 0, 1, 1)
 
         self.retranslateUi(DistroMap)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), DistroMap.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), DistroMap.reject)
         QtCore.QMetaObject.connectSlotsByName(DistroMap)
 

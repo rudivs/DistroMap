@@ -35,7 +35,6 @@ def getLayerFromId (uniqueId):
 def features(layer):
     return Features(layer)
 
-
 class DistroMap:
 
     def __init__(self, iface):
@@ -60,6 +59,43 @@ class DistroMap:
         # Create the dialog (after translation) and keep reference
         self.dlg = DistroMapDialog()
 
+    def confirm(self):
+        # runs when OK button is pressed
+        # initialise input parameters
+        self.BASE_LAYER = self.dlg.ui.comboBase.currentItemData()
+        self.SECONDARY_LAYER = self.dlg.ui.comboSecondary.currentItemData()
+        self.SURFACE_LAYER = self.dlg.ui.comboSurface.currentItemData()
+        self.LOCALITIES_LAYER = self.dlg.ui.comboLocalities.currentItemData()
+        self.TAXON_FIELD_INDEX = self.dlg.ui.comboTaxonField.currentItemData().toInt()[0]
+        self.GRID_LAYER = self.dlg.ui.comboGrid.currentItemData()
+        self.X_MIN = self.dlg.ui.leMinX.text().toFloat()[0]
+        self.Y_MIN = self.dlg.ui.leMinY.text().toFloat()[0]
+        self.X_MAX = self.dlg.ui.leMaxX.text().toFloat()[0]
+        self.Y_MAX = self.dlg.ui.leMaxY.text().toFloat()[0]
+        self.OUT_DIR = self.dlg.ui.leOutDir.text()
+        
+        # get list of unique values
+        try:
+            self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
+        except:
+            message =  "Could not get unique values from localities layer. "
+            message += "Check that the localities layer and taxon identifier "
+            message += "field are properly specified."
+            QMessageBox.information(self.dlg,"Distribution Map Generator",
+                message)
+            return
+
+        question =  "This will generate " + str(self.UNIQUE_COUNT)
+        question += " maps. Are you sure you want to continue?"
+        reply = QMessageBox.question(self.dlg,'Message', 
+            question, 
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            QDialog.accept(self.dlg)
+        else:
+            return
+
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(
@@ -67,6 +103,7 @@ class DistroMap:
             u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
+        QObject.connect(self.dlg.ui.buttonBox, SIGNAL("accepted()"), self.confirm)        
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
@@ -86,6 +123,7 @@ class DistroMap:
             print "Could not access the localities layer. Is it a valid vector layer?"
             return
         try:
+            fieldmap=provider.fieldNameMap()
             for (name,index) in fieldmap.iteritems():
                 self.dlg.ui.comboTaxonField.addItem(name,index)
         except:
@@ -101,6 +139,7 @@ class DistroMap:
     def getUniqueValues(self):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
         self.UNIQUE_VALUES = layer.dataProvider().uniqueValues(self.TAXON_FIELD_INDEX)
+        self.UNIQUE_COUNT = len(self.UNIQUE_VALUES)
     
     def selectByAttribute(self, value):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
@@ -242,27 +281,6 @@ class DistroMap:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result == 1:
-            # initialise input parameters
-            self.BASE_LAYER = self.dlg.ui.comboBase.currentItemData()
-            self.SECONDARY_LAYER = self.dlg.ui.comboSecondary.currentItemData()
-            self.SURFACE_LAYER = self.dlg.ui.comboSurface.currentItemData()
-            self.LOCALITIES_LAYER = self.dlg.ui.comboLocalities.currentItemData()
-            self.TAXON_FIELD_INDEX = self.dlg.ui.comboTaxonField.currentItemData().toInt()[0]
-            self.GRID_LAYER = self.dlg.ui.comboGrid.currentItemData()
-            self.X_MIN = self.dlg.ui.leMinX.text().toFloat()[0]
-            self.Y_MIN = self.dlg.ui.leMinY.text().toFloat()[0]
-            self.X_MAX = self.dlg.ui.leMaxX.text().toFloat()[0]
-            self.Y_MAX = self.dlg.ui.leMaxY.text().toFloat()[0]
-            self.OUT_DIR = self.dlg.ui.leOutDir.text()
-            
-            # get list of unique values
-            try:
-                self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
-            except:
-                QMessageBox.information(self.iface.mainWindow(),"Distribution Map Generator","Could not get unique values from localities layer. Is the localities layer and taxon identifier field properly specified?")
-                self.run()
-                return
-            
             # process all unique taxa
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
             count = 0
