@@ -81,15 +81,15 @@ class DistroMap:
         self.dlg.ui.comboTaxonField.clear()
         try:
             layer=getLayerFromId(self.dlg.ui.comboLocalities.currentItemData())
+            provider=layer.dataProvider()
         except: #Crashes without valid shapefiles
+            print "Could not access the localities layer. Is it a valid vector layer?"
             return
-        provider=layer.dataProvider()
-        try: # this function will crash on raster layers
-            fieldmap=provider.fieldNameMap()
+        try:
+            for (name,index) in fieldmap.iteritems():
+                self.dlg.ui.comboTaxonField.addItem(name,index)
         except:
-            return
-        for (name,index) in fieldmap.iteritems():
-            self.dlg.ui.comboTaxonField.addItem(name,index)
+            print "Could not load the field names for the localities layer."
 
     def loadOutDir(self):
         newname = QFileDialog.getExistingDirectory(None, QString.fromLocal8Bit("Output Maps Directory"),
@@ -219,6 +219,8 @@ class DistroMap:
         # populate combo boxes:
         self.dlg.ui.comboSecondary.addItem("None",None)
         self.dlg.ui.comboSurface.addItem("None",None)
+        
+       
         for layer in self.iface.mapCanvas().layers():
             self.dlg.ui.comboBase.addItem(layer.name(),QVariant(layer.id()))
             self.dlg.ui.comboSecondary.addItem(layer.name(),QVariant(layer.id()))
@@ -254,14 +256,16 @@ class DistroMap:
             self.OUT_DIR = self.dlg.ui.leOutDir.text()
             
             # get list of unique values
-            if self.TAXON_FIELD_INDEX != None:
+            try:
                 self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
-            else:
-                QMessageBox.information(self.iface.mainWindow(),"Distribution Map Generator","No taxon identifier field specified")
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Distribution Map Generator","Could not get unique values from localities layer. Is the localities layer and taxon identifier field properly specified?")
+                self.run()
+                return
             
             # process all unique taxa
             getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
-            count = 0 
+            count = 0
             for taxon in self.UNIQUE_VALUES:
                 self.selectByAttribute(taxon)
                 self.selectByLocation()
