@@ -28,6 +28,7 @@ import resources_rc
 # Import the code for the dialog
 from distromapdialog import DistroMapDialog, Features
 import os
+import tempfile
 
 def getLayerFromId (uniqueId):
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
@@ -200,8 +201,10 @@ class DistroMap:
         self.TAXON_GRID_LAYER = outputLayer
 
     def printMap(self,taxon):
-        currentdir = os.path.dirname(os.path.realpath(__file__))
-        self.TAXON_GRID_LAYER.loadNamedStyle(currentdir+os.sep+"distribution_map.qml")
+        # copy style from grid layer to output layer
+        outstyle = tempfile.gettempdir() + os.sep + "output.qml"
+        getLayerFromId(self.GRID_LAYER).saveNamedStyle(outstyle)
+        self.TAXON_GRID_LAYER.loadNamedStyle(outstyle)
         
         # create image (dimensions 325x299)
         img = QImage(QSize(325,299), QImage.Format_ARGB32_Premultiplied)
