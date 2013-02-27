@@ -73,6 +73,8 @@ class DistroMap:
         self.Y_MIN = self.dlg.ui.leMinY.text().toFloat()[0]
         self.X_MAX = self.dlg.ui.leMaxX.text().toFloat()[0]
         self.Y_MAX = self.dlg.ui.leMaxY.text().toFloat()[0]
+        self.OUT_WIDTH = self.dlg.ui.spnOutWidth.value()
+        self.OUT_HEIGHT = self.dlg.ui.spnOutHeight.value()
         self.OUT_DIR = self.dlg.ui.leOutDir.text()
         
         # get list of unique values
@@ -207,7 +209,7 @@ class DistroMap:
         self.TAXON_GRID_LAYER.loadNamedStyle(outstyle)
         
         # create image (dimensions 325x299)
-        img = QImage(QSize(325,299), QImage.Format_ARGB32_Premultiplied)
+        img = QImage(QSize(self.OUT_WIDTH,self.OUT_HEIGHT), QImage.Format_ARGB32_Premultiplied)
 
         # set image's background color
         color = QColor(192,192,255)   # blue sea
