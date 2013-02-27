@@ -3,11 +3,7 @@ Distribution Map Generator
 
 This QGIS plugin generates distribution maps based on a vector layer of point localities. It uses a chosen field in the localities attribute table to select matching features (presumably species), and intersects that with a separate vector layer which contains the grid polygons (these could also be other zonal vector layers, such as provinces or habitat types). The selected polygons are then styled and overlaid on the base map. Each distribution map is saved as a png file, with the unique identifier as a filename.
 
-Todo
-----
-
-* Add a colour selector to choose the background colour
-* Add a progress bar
+Currently Distribution Map Generator only works with QGIS version 1.9 or later.
   
 License
 -------

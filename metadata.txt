@@ -10,9 +10,9 @@
 
 [general]
 name=Distribution Map Generator
-qgisMinimumVersion=1.8
+qgisMinimumVersion=1.9
 description=Creates simple distribution maps based on point localities and a polygon grid layer.
-version=0.3
+version=0.7
 author=Rudi von Staden
 email=rudivs@gmail.com
 

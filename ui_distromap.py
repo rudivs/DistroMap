@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_distromap.ui'
 #
-# Created: Wed Feb 27 16:07:14 2013
+# Created: Wed Feb 27 16:24:42 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,14 +17,14 @@ except AttributeError:
 class Ui_DistroMap(object):
     def setupUi(self, DistroMap):
         DistroMap.setObjectName(_fromUtf8("DistroMap"))
-        DistroMap.resize(427, 620)
+        DistroMap.resize(439, 657)
         self.gridLayout_3 = QtGui.QGridLayout(DistroMap)
         self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
         self.scrollArea = QtGui.QScrollArea(DistroMap)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName(_fromUtf8("scrollArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 407, 567))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 419, 573))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.gridLayout_6 = QtGui.QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
@@ -198,6 +198,10 @@ class Ui_DistroMap(object):
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
         self.gridLayout_3.addWidget(self.buttonBox, 2, 0, 1, 1)
+        self.progressBar = QtGui.QProgressBar(DistroMap)
+        self.progressBar.setProperty("value", 0)
+        self.progressBar.setObjectName(_fromUtf8("progressBar"))
+        self.gridLayout_3.addWidget(self.progressBar, 1, 0, 1, 1)
 
         self.retranslateUi(DistroMap)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), DistroMap.reject)

@@ -95,6 +95,10 @@ class DistroMap:
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
+            self.process()
+            QMessageBox.information(self.dlg,"Distribution Map Generator",
+                "Map processing complete.")
+            self.dlg.ui.progressBar.setValue(0)
             QDialog.accept(self.dlg)
         else:
             return
@@ -271,6 +275,22 @@ class DistroMap:
         outdir = self.OUT_DIR
         img.save(outdir+os.sep+unicode(taxon.toString())+".png","png")
 
+    def process(self):        
+        self.dlg.ui.progressBar.setMaximum(len(self.UNIQUE_VALUES))
+        # process all unique taxa
+        getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
+        for taxon in self.UNIQUE_VALUES:
+            self.selectByAttribute(taxon)
+            self.selectByLocation()
+            self.saveSelected()
+            #load newly created memory layer
+            QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
+            self.printMap(taxon)
+            #unload memory layer
+            QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
+            self.TAXON_GRID_LAYER = None
+            self.dlg.ui.progressBar.setValue(self.dlg.ui.progressBar.value()+1)        
+
     # run method that performs all the real work
     def run(self):
        
@@ -307,20 +327,4 @@ class DistroMap:
         
         # Run the dialog event loop
         result = self.dlg.exec_()
-        # See if OK was pressed
-        if result == 1:
-            # process all unique taxa
-            getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
-            count = 0
-            for taxon in self.UNIQUE_VALUES:
-                self.selectByAttribute(taxon)
-                self.selectByLocation()
-                self.saveSelected()
-                #load newly created memory layer
-                QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
-                self.printMap(taxon)
-                #unload memory layer
-                QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
-                self.TAXON_GRID_LAYER = None
-                count += 1
-            
+                    
