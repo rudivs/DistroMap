@@ -103,7 +103,7 @@ class DistroMap:
             u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
         QObject.connect(self.action, SIGNAL("triggered()"), self.run)
-        QObject.connect(self.dlg.ui.buttonBox, SIGNAL("accepted()"), self.confirm)        
+        QObject.connect(self.dlg.ui.buttonBox, SIGNAL("accepted()"), self.confirm)
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
@@ -135,6 +135,14 @@ class DistroMap:
 
         if newname != None:
             self.dlg.ui.leOutDir.setText(QString(newname))
+
+    def getCurrentExtent(self):
+        extent = self.iface.mapCanvas().extent()
+        # {"{0:.6f}".format() shows the float with 6 decimal places
+        self.dlg.ui.leMinX.setText(str("{0:.6f}".format(extent.xMinimum())))
+        self.dlg.ui.leMinY.setText(str("{0:.6f}".format(extent.yMinimum())))
+        self.dlg.ui.leMaxX.setText(str("{0:.6f}".format(extent.xMaximum())))
+        self.dlg.ui.leMaxY.setText(str("{0:.6f}".format(extent.yMaximum())))
             
     def getUniqueValues(self):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
@@ -273,6 +281,7 @@ class DistroMap:
         # define the signal connectors
         QObject.connect(self.dlg.ui.comboLocalities,SIGNAL('currentIndexChanged (int)'),self.loadTaxonFields)
         QObject.connect(self.dlg.ui.btnBrowse,SIGNAL('clicked()'),self.loadOutDir)
+        QObject.connect(self.dlg.ui.btnExtent,SIGNAL('clicked()'),self.getCurrentExtent)
         
         # show the dialog
         self.dlg.show()       

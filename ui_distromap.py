@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_distromap.ui'
 #
-# Created: Fri Feb 22 15:23:55 2013
+# Created: Wed Feb 27 12:55:16 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -95,6 +95,9 @@ class Ui_DistroMap(object):
         self.leMinY = QtGui.QLineEdit(DistroMap)
         self.leMinY.setObjectName(_fromUtf8("leMinY"))
         self.gridLayout_2.addWidget(self.leMinY, 2, 1, 1, 1)
+        self.btnExtent = QtGui.QPushButton(DistroMap)
+        self.btnExtent.setObjectName(_fromUtf8("btnExtent"))
+        self.gridLayout_2.addWidget(self.btnExtent, 1, 1, 1, 1)
         self.verticalLayout_4.addLayout(self.gridLayout_2)
         self.gridLayout_3.addLayout(self.verticalLayout_4, 4, 0, 1, 1)
         self.verticalLayout_5 = QtGui.QVBoxLayout()
@@ -137,6 +140,7 @@ class Ui_DistroMap(object):
         self.leMinX.setText(QtGui.QApplication.translate("DistroMap", "14.75", None, QtGui.QApplication.UnicodeUTF8))
         self.leMaxX.setText(QtGui.QApplication.translate("DistroMap", "34.00", None, QtGui.QApplication.UnicodeUTF8))
         self.leMinY.setText(QtGui.QApplication.translate("DistroMap", "-36.00", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnExtent.setText(QtGui.QApplication.translate("DistroMap", "Use current", None, QtGui.QApplication.UnicodeUTF8))
         self.label_9.setText(QtGui.QApplication.translate("DistroMap", "Output directory:", None, QtGui.QApplication.UnicodeUTF8))
         self.btnBrowse.setText(QtGui.QApplication.translate("DistroMap", "Browse...", None, QtGui.QApplication.UnicodeUTF8))
 
