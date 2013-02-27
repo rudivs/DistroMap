@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_distromap.ui'
 #
-# Created: Wed Feb 27 15:24:52 2013
+# Created: Wed Feb 27 16:07:14 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,14 +17,14 @@ except AttributeError:
 class Ui_DistroMap(object):
     def setupUi(self, DistroMap):
         DistroMap.setObjectName(_fromUtf8("DistroMap"))
-        DistroMap.resize(405, 617)
+        DistroMap.resize(427, 620)
         self.gridLayout_3 = QtGui.QGridLayout(DistroMap)
         self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
         self.scrollArea = QtGui.QScrollArea(DistroMap)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName(_fromUtf8("scrollArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 399, 562))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 407, 567))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.gridLayout_6 = QtGui.QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
@@ -72,6 +72,7 @@ class Ui_DistroMap(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_21.sizePolicy().hasHeightForWidth())
         self.label_21.setSizePolicy(sizePolicy)
+        self.label_21.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_21.setObjectName(_fromUtf8("label_21"))
         self.verticalLayout_14.addWidget(self.label_21)
         self.horizontalLayout_4 = QtGui.QHBoxLayout()

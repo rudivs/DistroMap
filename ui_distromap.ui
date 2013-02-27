@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>405</width>
-    <height>617</height>
+    <width>427</width>
+    <height>620</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>399</width>
-        <height>562</height>
+        <width>407</width>
+        <height>567</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -104,6 +104,9 @@
                </property>
                <property name="text">
                 <string>Map background</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                </property>
               </widget>
              </item>

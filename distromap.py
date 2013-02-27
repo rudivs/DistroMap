@@ -111,6 +111,11 @@ class DistroMap:
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu(u"&Distribution Map Generator", self.action)
+        
+        # Set colour for output background colour chooser:
+        self.BACKGROUND_COLOUR = QColor(192,192,255)
+        self.dlg.ui.frmColour.setStyleSheet("QWidget { background-color: %s }" 
+            % self.BACKGROUND_COLOUR.name())
 
     def unload(self):
         # Remove the plugin menu item and icon
@@ -202,6 +207,14 @@ class DistroMap:
         outputLayer.updateExtents()
         self.TAXON_GRID_LAYER = outputLayer
 
+    def setBackgroundColour(self):
+        col = QColorDialog.getColor()
+
+        if col.isValid():
+            self.BACKGROUND_COLOUR = col
+            self.dlg.ui.frmColour.setStyleSheet("QWidget { background-color: %s }"
+                % self.BACKGROUND_COLOUR.name())
+
     def printMap(self,taxon):
         # copy style from grid layer to output layer
         outstyle = tempfile.gettempdir() + os.sep + "output.qml"
@@ -212,7 +225,7 @@ class DistroMap:
         img = QImage(QSize(self.OUT_WIDTH,self.OUT_HEIGHT), QImage.Format_ARGB32_Premultiplied)
 
         # set image's background color
-        color = QColor(192,192,255)   # blue sea
+        color = self.BACKGROUND_COLOUR
         img.fill(color.rgb())
 
         # create painter
@@ -287,6 +300,7 @@ class DistroMap:
         QObject.connect(self.dlg.ui.comboLocalities,SIGNAL('currentIndexChanged (int)'),self.loadTaxonFields)
         QObject.connect(self.dlg.ui.btnBrowse,SIGNAL('clicked()'),self.loadOutDir)
         QObject.connect(self.dlg.ui.btnExtent,SIGNAL('clicked()'),self.getCurrentExtent)
+        QObject.connect(self.dlg.ui.btnColour,SIGNAL('clicked()'),self.setBackgroundColour)
         
         # show the dialog
         self.dlg.show()       
