@@ -88,9 +88,9 @@ class DistroMap:
 
         question =  "This will generate " + str(self.UNIQUE_COUNT)
         question += " maps. Are you sure you want to continue?"
-        reply = QMessageBox.question(self.dlg,'Message', 
+        reply = QMessageBox.question(self.dlg,'Distribution Map Generator', 
             question, 
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
             QDialog.accept(self.dlg)

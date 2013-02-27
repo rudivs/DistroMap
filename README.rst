@@ -6,10 +6,8 @@ This QGIS plugin generates distribution maps based on a vector layer of point lo
 Todo
 ----
 
-  * Add a button to set extent based on the current map extent
-  * Add a colour selector to choose the background colour
-  * Copy the style of the provided grid layer for output, rather than use the single style currently provided.
-  * Add a progress bar
+* Add a colour selector to choose the background colour
+* Add a progress bar
   
 License
 -------
