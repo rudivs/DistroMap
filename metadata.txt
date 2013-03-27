@@ -12,7 +12,7 @@
 name=Distribution Map Generator
 qgisMinimumVersion=1.9
 description=A QGIS plugin to batch create distribution maps from point data.
-version=0.7.1
+version=0.7.2
 author=Rudi von Staden
 email=rudivs@gmail.com
 

@@ -23,7 +23,7 @@
 
 
 def name():
-    return "Distribution Map Creator"
+    return "Distribution Map Generator"
 
 
 def description():
@@ -31,7 +31,7 @@ def description():
 
 
 def version():
-    return "Version 0.1"
+    return "Version 0.7.2"
 
 
 def icon():
@@ -39,7 +39,7 @@ def icon():
 
 
 def qgisMinimumVersion():
-    return "1.8"
+    return "1.9"
 
 def author():
     return "Rudi von Staden"
