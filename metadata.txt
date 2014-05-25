@@ -10,9 +10,9 @@
 
 [general]
 name=Distribution Map Generator
-qgisMinimumVersion=1.9
+qgisMinimumVersion=2.0
 description=A QGIS plugin to batch create distribution maps from point data.
-version=0.7.2
+version=0.8.0
 author=Rudi von Staden
 email=rudivs@gmail.com
 
@@ -29,7 +29,7 @@ tags=distribution, map, range, species
 homepage=http://rudivs.github.com/DistroMap
 tracker=https://github.com/rudivs/DistroMap/issues
 repository=https://github.com/rudivs/DistroMap
-icon=icon.png
+icon=./icon.png
 # experimental flag
 experimental=True
 

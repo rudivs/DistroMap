@@ -25,7 +25,7 @@ from ui_distromap import Ui_DistroMap
 
 # Add a method to QComboBox to get the current item data
 def currentItemData(self):
-    return self.itemData(self.currentIndex()).toString()
+    return str(self.itemData(self.currentIndex()))
 
 QtGui.QComboBox.currentItemData = currentItemData
 

@@ -30,7 +30,10 @@ from distromapdialog import DistroMapDialog, Features
 import os
 import tempfile
 
+log = lambda m: QgsMessageLog.logMessage(m,'Distribution Map Generator') 
+
 def getLayerFromId (uniqueId):
+    log(str(QgsMapLayerRegistry.instance().mapLayer(uniqueId)))
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
 
 def features(layer):
@@ -45,7 +48,7 @@ class DistroMap:
         self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/distromap"
         # initialize locale
         localePath = ""
-        locale = QSettings().value("locale/userLocale").toString()[0:2]
+        locale = QSettings().value("locale/userLocale")[0:2]
 
         if QFileInfo(self.plugin_dir).exists():
             localePath = self.plugin_dir + "/i18n/distromap_" + locale + ".qm"
@@ -67,19 +70,18 @@ class DistroMap:
         self.SECONDARY_LAYER = self.dlg.ui.comboSecondary.currentItemData()
         self.SURFACE_LAYER = self.dlg.ui.comboSurface.currentItemData()
         self.LOCALITIES_LAYER = self.dlg.ui.comboLocalities.currentItemData()
-        self.TAXON_FIELD_INDEX = self.dlg.ui.comboTaxonField.currentItemData().toInt()[0]
+        self.TAXON_FIELD_INDEX = self.dlg.ui.comboTaxonField.currentItemData()[0]
         self.GRID_LAYER = self.dlg.ui.comboGrid.currentItemData()
-        self.X_MIN = self.dlg.ui.leMinX.text().toFloat()[0]
-        self.Y_MIN = self.dlg.ui.leMinY.text().toFloat()[0]
-        self.X_MAX = self.dlg.ui.leMaxX.text().toFloat()[0]
-        self.Y_MAX = self.dlg.ui.leMaxY.text().toFloat()[0]
+        self.X_MIN = float(self.dlg.ui.leMinX.text())
+        self.Y_MIN = float(self.dlg.ui.leMinY.text())
+        self.X_MAX = float(self.dlg.ui.leMaxX.text())
+        self.Y_MAX = float(self.dlg.ui.leMaxY.text())
         self.OUT_WIDTH = self.dlg.ui.spnOutWidth.value()
         self.OUT_HEIGHT = self.dlg.ui.spnOutHeight.value()
         self.OUT_DIR = self.dlg.ui.leOutDir.text()
         
-        # get list of unique values
         try:
-            self.getUniqueValues()  #output is of type QVariant: use value.toString() to process
+            self.getUniqueValues()  
         except:
             message =  "Could not get unique values from localities layer. "
             message += "Check that the localities layer and taxon identifier "
@@ -109,8 +111,10 @@ class DistroMap:
             QIcon(":/plugins/distromap/icon.png"),
             u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
-        QObject.connect(self.action, SIGNAL("triggered()"), self.run)
-        QObject.connect(self.dlg.ui.buttonBox, SIGNAL("accepted()"), self.confirm)
+        #QObject.connect(self.action, SIGNAL("triggered()"), self.run)
+        self.action.triggered.connect(self.run)
+        #QObject.connect(self.dlg.ui.buttonBox, SIGNAL("accepted()"), self.confirm)
+        self.dlg.ui.buttonBox.accepted.connect(self.confirm)
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
@@ -128,25 +132,26 @@ class DistroMap:
     
     def loadTaxonFields(self):
         self.dlg.ui.comboTaxonField.clear()
+        log("Layer ID: " + str(self.dlg.ui.comboLocalities.currentItemData()))
+
         try:
             layer=getLayerFromId(self.dlg.ui.comboLocalities.currentItemData())
             provider=layer.dataProvider()
         except: #Crashes without valid shapefiles
-            print "Could not access the localities layer. Is it a valid vector layer?"
+            log("Could not access the localities layer. Is it a valid vector layer?")
             return
         try:
             fieldmap=provider.fieldNameMap()
             for (name,index) in fieldmap.iteritems():
                 self.dlg.ui.comboTaxonField.addItem(name,index)
         except:
-            print "Could not load the field names for the localities layer."
+            log("Could not load the field names for the localities layer.")
 
     def loadOutDir(self):
-        newname = QFileDialog.getExistingDirectory(None, QString.fromLocal8Bit("Output Maps Directory"),
-            self.dlg.ui.leOutDir.displayText())
+        newname = QFileDialog.getExistingDirectory(None, "Output Maps Directory", self.dlg.ui.leOutDir.displayText())
 
         if newname != None:
-            self.dlg.ui.leOutDir.setText(QString(newname))
+            self.dlg.ui.leOutDir.setText(newname)
 
     def getCurrentExtent(self):
         extent = self.iface.mapCanvas().extent()
@@ -158,7 +163,7 @@ class DistroMap:
             
     def getUniqueValues(self):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
-        self.UNIQUE_VALUES = layer.dataProvider().uniqueValues(self.TAXON_FIELD_INDEX)
+        self.UNIQUE_VALUES = layer.dataProvider().uniqueValues(int(self.TAXON_FIELD_INDEX))
         self.UNIQUE_COUNT = len(self.UNIQUE_VALUES)
     
     def selectByAttribute(self, value):
@@ -168,7 +173,7 @@ class DistroMap:
         readcount = 0
         selected = []
         for feature in layer.getFeatures():
-            if unicode(feature.attributes()[selectindex].toString()) == unicode(value.toString()):
+            if unicode(str(feature.attributes()[int(selectindex)])) == unicode(str(value)):
                 selected.append(feature.id())
         layer.setSelectedFeatures(selected)
         
@@ -182,18 +187,19 @@ class DistroMap:
         for feat in inputLayer.getFeatures():        
             index.insertFeature(feat)
      
-        infeat = QgsFeature()
+        feat = QgsFeature()
         geom = QgsGeometry()
         selectedSet = []        
         feats = features(selectLayer)
-        for feat in feats:
-            geom = QgsGeometry(feat.geometry())
+        for f in feats:
+            geom = QgsGeometry(f.geometry())
             intersects = index.intersects(geom.boundingBox())
             for i in intersects:
-                inputLayer.featureAtId(i, infeat, True)
-                tmpGeom = QgsGeometry( infeat.geometry() )
+                request = QgsFeatureRequest().setFilterFid(i)
+                feat = inputLayer.getFeatures(request).next()
+                tmpGeom = QgsGeometry( feat.geometry() )
                 if geom.intersects(tmpGeom):
-                    selectedSet.append(infeat.id())
+                    selectedSet.append(feat.id())
         inputLayer.setSelectedFeatures(selectedSet)
     
     def saveSelected(self):
@@ -273,7 +279,7 @@ class DistroMap:
         
         # save image
         outdir = self.OUT_DIR
-        img.save(outdir+os.sep+unicode(taxon.toString())+".png","png")
+        img.save(outdir+os.sep+unicode(str(taxon))+".png","png")
 
     def process(self):        
         self.dlg.ui.progressBar.setMaximum(len(self.UNIQUE_VALUES))
@@ -307,20 +313,24 @@ class DistroMap:
         
        
         for layer in self.iface.mapCanvas().layers():
-            self.dlg.ui.comboBase.addItem(layer.name(),QVariant(layer.id()))
-            self.dlg.ui.comboSecondary.addItem(layer.name(),QVariant(layer.id()))
-            self.dlg.ui.comboSurface.addItem(layer.name(),QVariant(layer.id()))
+            self.dlg.ui.comboBase.addItem(layer.name(),layer.id())
+            self.dlg.ui.comboSecondary.addItem(layer.name(),layer.id())
+            self.dlg.ui.comboSurface.addItem(layer.name(),layer.id())
             #vector only layers:
             if type(layer).__name__ == "QgsVectorLayer":
-                self.dlg.ui.comboLocalities.addItem(layer.name(),QVariant(layer.id()))
-                self.dlg.ui.comboGrid.addItem(layer.name(),QVariant(layer.id()))
+                self.dlg.ui.comboLocalities.addItem(layer.name(),layer.id())
+                self.dlg.ui.comboGrid.addItem(layer.name(),layer.id())
         self.loadTaxonFields()
         
         # define the signal connectors
-        QObject.connect(self.dlg.ui.comboLocalities,SIGNAL('currentIndexChanged (int)'),self.loadTaxonFields)
-        QObject.connect(self.dlg.ui.btnBrowse,SIGNAL('clicked()'),self.loadOutDir)
-        QObject.connect(self.dlg.ui.btnExtent,SIGNAL('clicked()'),self.getCurrentExtent)
-        QObject.connect(self.dlg.ui.btnColour,SIGNAL('clicked()'),self.setBackgroundColour)
+        #QObject.connect(self.dlg.ui.comboLocalities,SIGNAL('currentIndexChanged (int)'),self.loadTaxonFields)
+        self.dlg.ui.comboLocalities.currentIndexChanged.connect(self.loadTaxonFields)
+        #QObject.connect(self.dlg.ui.btnBrowse,SIGNAL('clicked()'),self.loadOutDir)
+        self.dlg.ui.btnBrowse.clicked.connect(self.loadOutDir)
+        #QObject.connect(self.dlg.ui.btnExtent,SIGNAL('clicked()'),self.getCurrentExtent)
+        self.dlg.ui.btnExtent.clicked.connect(self.getCurrentExtent)
+        #QObject.connect(self.dlg.ui.btnColour,SIGNAL('clicked()'),self.setBackgroundColour)
+        self.dlg.ui.btnColour.clicked.connect(self.setBackgroundColour)
         
         # show the dialog
         self.dlg.show()       

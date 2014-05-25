@@ -21,32 +21,6 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
-
-def name():
-    return "Distribution Map Generator"
-
-
-def description():
-    return "Creates simple distribution maps based on point localities and a polygon grid layer."
-
-
-def version():
-    return "Version 0.7.2"
-
-
-def icon():
-    return "icon.png"
-
-
-def qgisMinimumVersion():
-    return "1.9"
-
-def author():
-    return "Rudi von Staden"
-
-def email():
-    return "rudivs@gmail.com"
-
 def classFactory(iface):
     # load DistroMap class from file DistroMap
     from distromap import DistroMap
