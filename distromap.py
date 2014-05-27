@@ -107,7 +107,7 @@ class DistroMap:
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(
-            QIcon(":/plugins/distromap/icon.png"),
+            QIcon(self.plugin_dir + "/icon.png"),
             u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
         self.action.triggered.connect(self.run)
