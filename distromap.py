@@ -33,7 +33,6 @@ import tempfile
 log = lambda m: QgsMessageLog.logMessage(m,'Distribution Map Generator') 
 
 def getLayerFromId (uniqueId):
-    log(str(QgsMapLayerRegistry.instance().mapLayer(uniqueId)))
     return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
 
 def features(layer):
@@ -111,9 +110,7 @@ class DistroMap:
             QIcon(":/plugins/distromap/icon.png"),
             u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
-        #QObject.connect(self.action, SIGNAL("triggered()"), self.run)
         self.action.triggered.connect(self.run)
-        #QObject.connect(self.dlg.ui.buttonBox, SIGNAL("accepted()"), self.confirm)
         self.dlg.ui.buttonBox.accepted.connect(self.confirm)
 
         # Add toolbar button and menu item
@@ -132,7 +129,6 @@ class DistroMap:
     
     def loadTaxonFields(self):
         self.dlg.ui.comboTaxonField.clear()
-        log("Layer ID: " + str(self.dlg.ui.comboLocalities.currentItemData()))
 
         try:
             layer=getLayerFromId(self.dlg.ui.comboLocalities.currentItemData())
@@ -285,6 +281,9 @@ class DistroMap:
         self.dlg.ui.progressBar.setMaximum(len(self.UNIQUE_VALUES))
         # process all unique taxa
         getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
+        # use global projection
+        oldValidation = QSettings().value( "/Projections/defaultBehaviour", "useGlobal", type=str )
+        QSettings().setValue( "/Projections/defaultBehaviour", "useGlobal" )
         for taxon in self.UNIQUE_VALUES:
             self.selectByAttribute(taxon)
             self.selectByLocation()
@@ -296,6 +295,8 @@ class DistroMap:
             QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
             self.TAXON_GRID_LAYER = None
             self.dlg.ui.progressBar.setValue(self.dlg.ui.progressBar.value()+1)        
+        #restore saved default projection setting
+        QSettings().setValue( "/Projections/defaultBehaviour", oldValidation )
 
     # run method that performs all the real work
     def run(self):
