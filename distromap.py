@@ -107,7 +107,7 @@ class DistroMap:
     def initGui(self):
         # Create action that will start plugin configuration
         self.action = QAction(
-            QIcon(self.plugin_dir + "/icon.png"),
+            QIcon(self.plugin_dir + "/icon.svg"),
             u"Distribution Map Generator...", self.iface.mainWindow())
         # connect the action to the run method
         self.action.triggered.connect(self.run)
@@ -144,8 +144,9 @@ class DistroMap:
             log("Could not load the field names for the localities layer.")
 
     def loadOutDir(self):
-        newname = QFileDialog.getExistingDirectory(None, "Output Maps Directory", self.dlg.ui.leOutDir.displayText())
-
+        #newname = QFileDialog.getExistingDirectory(None, "Output Maps Directory", self.dlg.ui.leOutDir.displayText())
+        newname = QFileDialog.getExistingDirectory(None, "Output Maps Directory")
+        
         if newname != None:
             self.dlg.ui.leOutDir.setText(newname)
 
@@ -297,6 +298,9 @@ class DistroMap:
             self.dlg.ui.progressBar.setValue(self.dlg.ui.progressBar.value()+1)        
         #restore saved default projection setting
         QSettings().setValue( "/Projections/defaultBehaviour", oldValidation )
+        #clear selection
+        getLayerFromId(self.LOCALITIES_LAYER).removeSelection()
+        getLayerFromId(self.GRID_LAYER).removeSelection()
 
     # run method that performs all the real work
     def run(self):
