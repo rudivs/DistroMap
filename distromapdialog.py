@@ -20,16 +20,19 @@
  ***************************************************************************/
 """
 
-from PyQt4 import QtCore, QtGui
-from ui_distromap import Ui_DistroMap
+from builtins import str
+from builtins import object
+from qgis.core import QgsFeature
+from qgis.PyQt.QtWidgets import (QDialog, QComboBox)
+from .ui_distromap import Ui_DistroMap
 
 # Add a method to QComboBox to get the current item data
 def currentItemData(self):
     return str(self.itemData(self.currentIndex()))
 
-QtGui.QComboBox.currentItemData = currentItemData
+QComboBox.currentItemData = currentItemData
 
-class Features():
+class Features(object):
 # Class adapted from version in Sextante QGisLayers driver (by Victor Olaya)
 
     def __init__(self, layer):
@@ -67,12 +70,11 @@ class Features():
             return int(self.layer.selectedFeatureCount())
         else:
             return int(self.layer.featureCount())
-                
 
-class DistroMapDialog(QtGui.QDialog):
+
+class DistroMapDialog(QDialog):
     def __init__(self):
-        QtGui.QDialog.__init__(self)
+        QDialog.__init__(self)
         # Set up the user interface from Designer.
         self.ui = Ui_DistroMap()
         self.ui.setupUi(self)
-

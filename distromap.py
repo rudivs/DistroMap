@@ -19,32 +19,41 @@
  *                                                                         *
  ***************************************************************************/
 """
+from __future__ import absolute_import
 # Import the PyQt and QGIS libraries
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
+from builtins import str
+from builtins import object
+from qgis.PyQt.QtCore import (QCoreApplication, QSettings, QTranslator,
+                              QFileInfo, QSize)
+from qgis.PyQt.QtWidgets import (QMessageBox, QDialog, QFileDialog,
+                                 QColorDialog, QAction, QWidget)
+from qgis.PyQt.QtGui import (QIcon, QImage, QColor, QPainter)
+from qgis.core import (QgsApplication, QgsMessageLog, QgsProject,
+                       QgsSpatialIndex, QgsFeature, QgsGeometry,
+                       QgsFeatureRequest, QgsRectangle, QgsMapSettings,
+                       QgsVectorLayer)
 # Initialize Qt resources from file resources.py
-import resources_rc
+from . import resources_rc
 # Import the code for the dialog
-from distromapdialog import DistroMapDialog, Features
+from .distromapdialog import DistroMapDialog, Features
 import os
 import tempfile
 
-log = lambda m: QgsMessageLog.logMessage(m,'Distribution Map Generator') 
+log = lambda m: QgsMessageLog.logMessage(m,'Distribution Map Generator')
 
 def getLayerFromId (uniqueId):
-    return QgsMapLayerRegistry.instance().mapLayer(uniqueId)
+    return QgsProject.instance().mapLayer(uniqueId)
 
 def features(layer):
     return Features(layer)
 
-class DistroMap:
+class DistroMap(object):
 
     def __init__(self, iface):
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
-        self.plugin_dir = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/distromap"
+        self.plugin_dir = QFileInfo(QgsApplication.qgisSettingsDirPath()).path() + "/python/plugins/distromap"
         # initialize locale
         localePath = ""
         locale = QSettings().value("locale/userLocale")[0:2]
@@ -78,9 +87,9 @@ class DistroMap:
         self.OUT_WIDTH = self.dlg.ui.spnOutWidth.value()
         self.OUT_HEIGHT = self.dlg.ui.spnOutHeight.value()
         self.OUT_DIR = self.dlg.ui.leOutDir.text()
-        
+
         try:
-            self.getUniqueValues()  
+            self.getUniqueValues()
         except:
             message =  "Could not get unique values from localities layer. "
             message += "Check that the localities layer and taxon identifier "
@@ -91,8 +100,8 @@ class DistroMap:
 
         question =  "This will generate " + str(self.UNIQUE_COUNT)
         question += " maps. Are you sure you want to continue?"
-        reply = QMessageBox.question(self.dlg,'Distribution Map Generator', 
-            question, 
+        reply = QMessageBox.question(self.dlg,'Distribution Map Generator',
+            question,
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
@@ -116,17 +125,17 @@ class DistroMap:
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu(u"&Distribution Map Generator", self.action)
-        
+
         # Set colour for output background colour chooser:
         self.BACKGROUND_COLOUR = QColor(192,192,255)
-        self.dlg.ui.frmColour.setStyleSheet("QWidget { background-color: %s }" 
+        self.dlg.ui.frmColour.setStyleSheet("QWidget { background-color: %s }"
             % self.BACKGROUND_COLOUR.name())
 
     def unload(self):
         # Remove the plugin menu item and icon
         self.iface.removePluginMenu(u"&Distribution Map Generator", self.action)
         self.iface.removeToolBarIcon(self.action)
-    
+
     def loadTaxonFields(self):
         self.dlg.ui.comboTaxonField.clear()
 
@@ -138,7 +147,7 @@ class DistroMap:
             return
         try:
             fieldmap=provider.fieldNameMap()
-            for (name,index) in fieldmap.iteritems():
+            for (name,index) in fieldmap.items():
                 self.dlg.ui.comboTaxonField.addItem(name,index)
         except:
             log("Could not load the field names for the localities layer.")
@@ -146,7 +155,7 @@ class DistroMap:
     def loadOutDir(self):
         #newname = QFileDialog.getExistingDirectory(None, "Output Maps Directory", self.dlg.ui.leOutDir.displayText())
         newname = QFileDialog.getExistingDirectory(None, "Output Maps Directory")
-        
+
         if newname != None:
             self.dlg.ui.leOutDir.setText(newname)
 
@@ -157,12 +166,12 @@ class DistroMap:
         self.dlg.ui.leMinY.setText(str("{0:.6f}".format(extent.yMinimum())))
         self.dlg.ui.leMaxX.setText(str("{0:.6f}".format(extent.xMaximum())))
         self.dlg.ui.leMaxY.setText(str("{0:.6f}".format(extent.yMaximum())))
-            
+
     def getUniqueValues(self):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
         self.UNIQUE_VALUES = layer.dataProvider().uniqueValues(int(self.TAXON_FIELD_INDEX))
         self.UNIQUE_COUNT = len(self.UNIQUE_VALUES)
-    
+
     def selectByAttribute(self, value):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
         selectindex = self.TAXON_FIELD_INDEX
@@ -170,10 +179,10 @@ class DistroMap:
         readcount = 0
         selected = []
         for feature in layer.getFeatures():
-            if unicode(str(feature.attributes()[int(selectindex)])) == unicode(str(value)):
+            if str(str(feature.attributes()[int(selectindex)])) == str(str(value)):
                 selected.append(feature.id())
-        layer.setSelectedFeatures(selected)
-        
+        layer.selectByIds(selected)
+
     def selectByLocation(self):
         inputLayer = getLayerFromId(self.GRID_LAYER)
         selectLayer = getLayerFromId(self.LOCALITIES_LAYER)
@@ -181,24 +190,24 @@ class DistroMap:
 
         index = QgsSpatialIndex()
         feat = QgsFeature()
-        for feat in inputLayer.getFeatures():        
+        for feat in inputLayer.getFeatures():
             index.insertFeature(feat)
-     
+
         feat = QgsFeature()
         geom = QgsGeometry()
-        selectedSet = []        
+        selectedSet = []
         feats = features(selectLayer)
         for f in feats:
             geom = QgsGeometry(f.geometry())
             intersects = index.intersects(geom.boundingBox())
             for i in intersects:
                 request = QgsFeatureRequest().setFilterFid(i)
-                feat = inputLayer.getFeatures(request).next()
+                feat = next(inputLayer.getFeatures(request))
                 tmpGeom = QgsGeometry( feat.geometry() )
                 if geom.intersects(tmpGeom):
                     selectedSet.append(feat.id())
-        inputLayer.setSelectedFeatures(selectedSet)
-    
+        inputLayer.selectByIds(selectedSet)
+
     def saveSelected(self):
         inputLayer = getLayerFromId(self.GRID_LAYER)
         provider = inputLayer.dataProvider()
@@ -227,7 +236,7 @@ class DistroMap:
         outstyle = tempfile.gettempdir() + os.sep + "output.qml"
         getLayerFromId(self.GRID_LAYER).saveNamedStyle(outstyle)
         self.TAXON_GRID_LAYER.loadNamedStyle(outstyle)
-        
+
         # create image (dimensions 325x299)
         img = QImage(QSize(self.OUT_WIDTH,self.OUT_HEIGHT), QImage.Format_ARGB32_Premultiplied)
 
@@ -240,7 +249,7 @@ class DistroMap:
         p.begin(img)
         p.setRenderHint(QPainter.Antialiasing)
 
-        render = QgsMapRenderer()
+        render = QgsMapSettings()
 
         # create layer set
         baseLayer = getLayerFromId(self.BASE_LAYER)
@@ -252,16 +261,16 @@ class DistroMap:
             surfaceLayer = getLayerFromId(self.SURFACE_LAYER)
         else:
             surfaceLayer = None
-        
+
         lst = []
-        lst.append(self.TAXON_GRID_LAYER.id())
-        if self.SURFACE_LAYER != unicode(""):
+        lst.append(self.TAXON_GRID_LAYER)
+        if self.SURFACE_LAYER != str(""):
             lst.append(self.SURFACE_LAYER)
-        if self.SECONDARY_LAYER != unicode(""):
+        if self.SECONDARY_LAYER != str(""):
             lst.append(self.SECONDARY_LAYER)
         lst.append(self.BASE_LAYER)
-        
-        render.setLayerSet(lst)
+
+        render.setLayers(lst)
 
         # set extent (xmin,ymin,xmax,ymax)
         rect = QgsRectangle(self.X_MIN,self.Y_MIN,self.X_MAX,self.Y_MAX)
@@ -273,15 +282,15 @@ class DistroMap:
         # do the rendering
         render.render(p)
         p.end()
-        
+
         # save image
         outdir = self.OUT_DIR
-        img.save(outdir+os.sep+unicode(str(taxon))+".png","png")
+        img.save(outdir+os.sep+str(str(taxon))+".png","png")
 
-    def process(self):        
+    def process(self):
         self.dlg.ui.progressBar.setMaximum(len(self.UNIQUE_VALUES))
         # process all unique taxa
-        getLayerFromId(self.LOCALITIES_LAYER).setSelectedFeatures([])
+        getLayerFromId(self.LOCALITIES_LAYER).selectByIds([])
         # use global projection
         oldValidation = QSettings().value( "/Projections/defaultBehaviour", "useGlobal", type=str )
         QSettings().setValue( "/Projections/defaultBehaviour", "useGlobal" )
@@ -290,12 +299,12 @@ class DistroMap:
             self.selectByLocation()
             self.saveSelected()
             #load newly created memory layer
-            QgsMapLayerRegistry.instance().addMapLayer(self.TAXON_GRID_LAYER)
+            QgsProject.instance().addMapLayer(self.TAXON_GRID_LAYER)
             self.printMap(taxon)
             #unload memory layer
-            QgsMapLayerRegistry.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
+            QgsProject.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
             self.TAXON_GRID_LAYER = None
-            self.dlg.ui.progressBar.setValue(self.dlg.ui.progressBar.value()+1)        
+            self.dlg.ui.progressBar.setValue(self.dlg.ui.progressBar.value()+1)
         #restore saved default projection setting
         QSettings().setValue( "/Projections/defaultBehaviour", oldValidation )
         #clear selection
@@ -304,19 +313,19 @@ class DistroMap:
 
     # run method that performs all the real work
     def run(self):
-       
+
         # first clear combo boxes so they don't get duplicate entries:
         self.dlg.ui.comboBase.clear()
         self.dlg.ui.comboSecondary.clear()
         self.dlg.ui.comboSurface.clear()
         self.dlg.ui.comboLocalities.clear()
         self.dlg.ui.comboGrid.clear()
-        
+
         # populate combo boxes:
         self.dlg.ui.comboSecondary.addItem("None",None)
         self.dlg.ui.comboSurface.addItem("None",None)
-        
-       
+
+
         for layer in self.iface.mapCanvas().layers():
             self.dlg.ui.comboBase.addItem(layer.name(),layer.id())
             self.dlg.ui.comboSecondary.addItem(layer.name(),layer.id())
@@ -326,7 +335,7 @@ class DistroMap:
                 self.dlg.ui.comboLocalities.addItem(layer.name(),layer.id())
                 self.dlg.ui.comboGrid.addItem(layer.name(),layer.id())
         self.loadTaxonFields()
-        
+
         # define the signal connectors
         #QObject.connect(self.dlg.ui.comboLocalities,SIGNAL('currentIndexChanged (int)'),self.loadTaxonFields)
         self.dlg.ui.comboLocalities.currentIndexChanged.connect(self.loadTaxonFields)
@@ -336,10 +345,9 @@ class DistroMap:
         self.dlg.ui.btnExtent.clicked.connect(self.getCurrentExtent)
         #QObject.connect(self.dlg.ui.btnColour,SIGNAL('clicked()'),self.setBackgroundColour)
         self.dlg.ui.btnColour.clicked.connect(self.setBackgroundColour)
-        
+
         # show the dialog
-        self.dlg.show()       
-        
+        self.dlg.show()
+
         # Run the dialog event loop
         result = self.dlg.exec_()
-                    

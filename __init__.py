@@ -20,8 +20,9 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
+from __future__ import absolute_import
 
 def classFactory(iface):
     # load DistroMap class from file DistroMap
-    from distromap import DistroMap
+    from .distromap import DistroMap
     return DistroMap(iface)
