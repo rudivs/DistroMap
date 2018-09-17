@@ -31,7 +31,7 @@ from qgis.PyQt.QtGui import (QIcon, QImage, QColor, QPainter)
 from qgis.core import (QgsApplication, QgsMessageLog, QgsProject,
                        QgsSpatialIndex, QgsFeature, QgsGeometry,
                        QgsFeatureRequest, QgsRectangle, QgsMapSettings,
-                       QgsVectorLayer)
+                       QgsVectorLayer, QgsMapRendererCustomPainterJob, QgsCsException)
 # Initialize Qt resources from file resources.py
 from . import resources_rc
 # Import the code for the dialog
@@ -43,9 +43,6 @@ log = lambda m: QgsMessageLog.logMessage(m,'Distribution Map Generator')
 
 def getLayerFromId (uniqueId):
     return QgsProject.instance().mapLayer(uniqueId)
-
-def features(layer):
-    return Features(layer)
 
 class DistroMap(object):
 
@@ -105,7 +102,13 @@ class DistroMap(object):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
-            self.process()
+            try:
+                self.process()
+            except QgsCsException:
+                return
+            except Exception as ex:
+                log(ex)
+                return
             QMessageBox.information(self.dlg,"Distribution Map Generator",
                 "Map processing complete.")
             self.dlg.ui.progressBar.setValue(0)
@@ -142,7 +145,7 @@ class DistroMap(object):
         try:
             layer=getLayerFromId(self.dlg.ui.comboLocalities.currentItemData())
             provider=layer.dataProvider()
-        except: #Crashes without valid shapefiles
+        except AttributeError: #Crashes without valid shapefiles
             log("Could not access the localities layer. Is it a valid vector layer?")
             return
         try:
@@ -186,6 +189,10 @@ class DistroMap(object):
     def selectByLocation(self):
         inputLayer = getLayerFromId(self.GRID_LAYER)
         selectLayer = getLayerFromId(self.LOCALITIES_LAYER)
+        if inputLayer.crs() != selectLayer.crs():
+            QMessageBox.information(self.dlg,"Distribution Map Generator",
+                "Localities layer and grid layers must have the same projection.")
+            raise QgsCsException("Localities layer and grid layers must have the same projection.")
         inputProvider = inputLayer.dataProvider()
 
         index = QgsSpatialIndex()
@@ -196,7 +203,7 @@ class DistroMap(object):
         feat = QgsFeature()
         geom = QgsGeometry()
         selectedSet = []
-        feats = features(selectLayer)
+        feats = selectLayer.getFeatures()
         for f in feats:
             geom = QgsGeometry(f.geometry())
             intersects = index.intersects(geom.boundingBox())
@@ -217,7 +224,7 @@ class DistroMap(object):
         outProvider = outputLayer.dataProvider()
 
         # add features
-        outGrids = features(inputLayer)
+        outGrids = inputLayer.selectedFeatures()
         for grid in outGrids:
             outProvider.addFeatures([grid])
         outputLayer.updateExtents()
@@ -237,50 +244,67 @@ class DistroMap(object):
         getLayerFromId(self.GRID_LAYER).saveNamedStyle(outstyle)
         self.TAXON_GRID_LAYER.loadNamedStyle(outstyle)
 
-        # create image (dimensions 325x299)
-        img = QImage(QSize(self.OUT_WIDTH,self.OUT_HEIGHT), QImage.Format_ARGB32_Premultiplied)
-
-        # set image's background color
-        color = self.BACKGROUND_COLOUR
-        img.fill(color.rgb())
-
-        # create painter
-        p = QPainter()
-        p.begin(img)
-        p.setRenderHint(QPainter.Antialiasing)
-
-        render = QgsMapSettings()
-
         # create layer set
         baseLayer = getLayerFromId(self.BASE_LAYER)
-        if self.SECONDARY_LAYER != None:
+        if self.TAXON_GRID_LAYER.crs() != baseLayer.crs():
+            QMessageBox.information(self.dlg,"Distribution Map Generator",
+                "All layers must have the same projection.")
+            raise QgsCsException("All layers must have the same projection.")
+        baseCrs = baseLayer.crs()
+        if self.SECONDARY_LAYER != "None":
             secondaryLayer = getLayerFromId(self.SECONDARY_LAYER)
+            if secondaryLayer.crs() != baseLayer.crs():
+                QMessageBox.information(self.dlg,"Distribution Map Generator",
+                    "All layers must have the same projection.")
+                raise QgsCsException("All layers must have the same projection.")
         else:
             secondaryLayer = None
-        if self.SURFACE_LAYER != None:
+        if self.SURFACE_LAYER != "None":
+            log(self.SURFACE_LAYER)
             surfaceLayer = getLayerFromId(self.SURFACE_LAYER)
+            if surfaceLayer.crs() != baseLayer.crs():
+                QMessageBox.information(self.dlg,"Distribution Map Generator",
+                    "All layers must have the same projection.")
+                raise QgsCsException("All layers must have the same projection.")
         else:
             surfaceLayer = None
 
         lst = []
         lst.append(self.TAXON_GRID_LAYER)
-        if self.SURFACE_LAYER != str(""):
-            lst.append(self.SURFACE_LAYER)
-        if self.SECONDARY_LAYER != str(""):
-            lst.append(self.SECONDARY_LAYER)
-        lst.append(self.BASE_LAYER)
+        if self.SURFACE_LAYER != "None":
+            lst.append(surfaceLayer)
+        if self.SECONDARY_LAYER != "None":
+            lst.append(secondaryLayer)
+        lst.append(baseLayer)
 
-        render.setLayers(lst)
+        ms = QgsMapSettings()
+        ms.setLayers(lst)
+        ms.setBackgroundColor(self.BACKGROUND_COLOUR)
 
         # set extent (xmin,ymin,xmax,ymax)
         rect = QgsRectangle(self.X_MIN,self.Y_MIN,self.X_MAX,self.Y_MAX)
-        render.setExtent(rect)
+        ms.setExtent(rect)
 
         # set output size
-        render.setOutputSize(img.size(), img.logicalDpiX())
+        outputSize = QSize(self.OUT_WIDTH,self.OUT_HEIGHT)
+        ms.setOutputSize(outputSize)
+
+        # create painter
+        p = QPainter()
+        p.setRenderHint(QPainter.Antialiasing)
+
+        # create image (dimensions 325x299)
+        img = QImage(outputSize, QImage.Format_ARGB32_Premultiplied)
+        p.begin(img)
+        # set image's background color
+        color = self.BACKGROUND_COLOUR
+        img.fill(color.rgb())
 
         # do the rendering
-        render.render(p)
+        r = QgsMapRendererCustomPainterJob(ms, p)
+
+        r.start()
+        r.waitForFinished()
         p.end()
 
         # save image
@@ -292,21 +316,29 @@ class DistroMap(object):
         # process all unique taxa
         getLayerFromId(self.LOCALITIES_LAYER).selectByIds([])
         # use global projection
-        oldValidation = QSettings().value( "/Projections/defaultBehaviour", "useGlobal", type=str )
-        QSettings().setValue( "/Projections/defaultBehaviour", "useGlobal" )
+        #oldValidation = QSettings().value( "/Projections/defaultBehavior", "useGlobal", type=str )
+        #QSettings().setValue( "/Projections/defaultBehavior", "useGlobal" )
         for taxon in self.UNIQUE_VALUES:
             self.selectByAttribute(taxon)
             self.selectByLocation()
             self.saveSelected()
             #load newly created memory layer
             QgsProject.instance().addMapLayer(self.TAXON_GRID_LAYER)
-            self.printMap(taxon)
+            try:
+                self.printMap(taxon)
+            except QgsCsException:
+                #unload memory layer
+                QgsProject.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
+                self.TAXON_GRID_LAYER = None
+                getLayerFromId(self.LOCALITIES_LAYER).removeSelection()
+                getLayerFromId(self.GRID_LAYER).removeSelection()
+                raise
             #unload memory layer
             QgsProject.instance().removeMapLayers([self.TAXON_GRID_LAYER.id()])
             self.TAXON_GRID_LAYER = None
             self.dlg.ui.progressBar.setValue(self.dlg.ui.progressBar.value()+1)
         #restore saved default projection setting
-        QSettings().setValue( "/Projections/defaultBehaviour", oldValidation )
+        #QSettings().setValue( "/Projections/defaultBehaviour", oldValidation )
         #clear selection
         getLayerFromId(self.LOCALITIES_LAYER).removeSelection()
         getLayerFromId(self.GRID_LAYER).removeSelection()
