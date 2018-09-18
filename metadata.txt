@@ -12,6 +12,7 @@
 name=Distribution Map Generator
 qgisMinimumVersion=3.0
 description=A QGIS plugin to batch create distribution maps from point data.
+about=This QGIS plugin generates a series of distribution maps based on a layer of point localities. It uses a chosen field in the localities attribute table to select matching features, and intersects that with a separate vector layer which contains the grid polygons (these could be provinces, squares, or you could use the point layer itself to get point maps out). The selected points or polygons are then overlaid on the base map. Each distribution map is saved as a png file, with the unique identifier as a filename.
 version=1.0.0
 author=Rudi von Staden
 email=rudivs@gmail.com
