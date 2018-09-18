@@ -31,7 +31,8 @@ from qgis.PyQt.QtGui import (QIcon, QImage, QColor, QPainter)
 from qgis.core import (QgsApplication, QgsMessageLog, QgsProject,
                        QgsSpatialIndex, QgsFeature, QgsGeometry,
                        QgsFeatureRequest, QgsRectangle, QgsMapSettings,
-                       QgsVectorLayer, QgsMapRendererCustomPainterJob, QgsCsException)
+                       QgsVectorLayer, QgsMapRendererCustomPainterJob, QgsCsException,
+                       QgsExpression)
 # Initialize Qt resources from file resources.py
 from . import resources_rc
 # Import the code for the dialog
@@ -100,6 +101,10 @@ class DistroMap(object):
         reply = QMessageBox.question(self.dlg,'Distribution Map Generator',
             question,
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+
+        self.GRID_INDEX = QgsSpatialIndex()
+        for feat in getLayerFromId(self.GRID_LAYER).getFeatures():
+            self.GRID_INDEX.insertFeature(feat)
 
         if reply == QMessageBox.Yes:
             try:
@@ -177,54 +182,46 @@ class DistroMap(object):
 
     def selectByAttribute(self, value):
         layer = getLayerFromId(self.LOCALITIES_LAYER)
-        selectindex = self.TAXON_FIELD_INDEX
-
-        readcount = 0
+        field_index = self.TAXON_FIELD_INDEX
+        field_name = layer.fields()[int(field_index)].name()
         selected = []
-        for feature in layer.getFeatures():
-            if str(str(feature.attributes()[int(selectindex)])) == str(str(value)):
-                selected.append(feature.id())
+        filter = QgsExpression.createFieldEqualityExpression(field_name, str(value))
+        request = QgsFeatureRequest().setFilterExpression(filter)
+        request.setSubsetOfAttributes([])
+        for feature in layer.getFeatures(request):
+            selected.append(feature.id())
         layer.selectByIds(selected)
 
     def selectByLocation(self):
-        inputLayer = getLayerFromId(self.GRID_LAYER)
+        gridLayer = getLayerFromId(self.GRID_LAYER)
         selectLayer = getLayerFromId(self.LOCALITIES_LAYER)
-        if inputLayer.crs() != selectLayer.crs():
+        if gridLayer.crs() != selectLayer.crs():
             QMessageBox.information(self.dlg,"Distribution Map Generator",
                 "Localities layer and grid layers must have the same projection.")
             raise QgsCsException("Localities layer and grid layers must have the same projection.")
-        inputProvider = inputLayer.dataProvider()
 
-        index = QgsSpatialIndex()
-        feat = QgsFeature()
-        for feat in inputLayer.getFeatures():
-            index.insertFeature(feat)
-
-        feat = QgsFeature()
-        geom = QgsGeometry()
         selectedSet = []
-        feats = selectLayer.getFeatures()
+        feats = selectLayer.selectedFeatures()
         for f in feats:
             geom = QgsGeometry(f.geometry())
-            intersects = index.intersects(geom.boundingBox())
+            intersects = self.GRID_INDEX.intersects(geom.boundingBox())
             for i in intersects:
                 request = QgsFeatureRequest().setFilterFid(i)
-                feat = next(inputLayer.getFeatures(request))
+                feat = next(gridLayer.getFeatures(request))
                 tmpGeom = QgsGeometry( feat.geometry() )
                 if geom.intersects(tmpGeom):
                     selectedSet.append(feat.id())
-        inputLayer.selectByIds(selectedSet)
+        gridLayer.selectByIds(selectedSet)
 
     def saveSelected(self):
-        inputLayer = getLayerFromId(self.GRID_LAYER)
-        provider = inputLayer.dataProvider()
+        gridLayer = getLayerFromId(self.GRID_LAYER)
 
-        # create layer
+        # create memory layer
         outputLayer = QgsVectorLayer("Polygon", "taxon", "memory")
         outProvider = outputLayer.dataProvider()
 
         # add features
-        outGrids = inputLayer.selectedFeatures()
+        outGrids = gridLayer.selectedFeatures()
         for grid in outGrids:
             outProvider.addFeatures([grid])
         outputLayer.updateExtents()
@@ -260,7 +257,6 @@ class DistroMap(object):
         else:
             secondaryLayer = None
         if self.SURFACE_LAYER != "None":
-            log(self.SURFACE_LAYER)
             surfaceLayer = getLayerFromId(self.SURFACE_LAYER)
             if surfaceLayer.crs() != baseLayer.crs():
                 QMessageBox.information(self.dlg,"Distribution Map Generator",
@@ -296,9 +292,6 @@ class DistroMap(object):
         # create image (dimensions 325x299)
         img = QImage(outputSize, QImage.Format_ARGB32_Premultiplied)
         p.begin(img)
-        # set image's background color
-        color = self.BACKGROUND_COLOUR
-        img.fill(color.rgb())
 
         # do the rendering
         r = QgsMapRendererCustomPainterJob(ms, p)
